@@ -50,7 +50,89 @@ class User{
                 return FALSE;
             }
         }else{
-            
+            $sql = "UPDATE Users SET name='$this->name',email='$this->email',hashed_password='$this->hashPassword' WHERE id='$this->id'";
+            $result = $connection->query($sql);
+            if($result == TRUE){
+                return TRUE;
+            }else{
+                return FALSE;
+            }
         }
     }
+    static public function loadUserById(mysqli $connection, $id){
+        $sql = "SELECT * FROM Users WHERE id= ".$connection->real_escape_string($id);
+        
+        $result = $connection->query($sql);
+        if($result == TRUE && $result->num_rows == 1){
+            $row = $result->fetch_assoc();
+            
+            $loadedUser = new User();
+            $loadedUser->id = $row['id'];
+            $loadedUser->name = $row['name'];
+            $loadedUser->hashPassword = $row['hashed_password'];
+            $loadedUser->email = $row['email'];
+            
+            return $loadedUser;
+        }
+        return NULL;
+    }
+    static public function loadAllUsers(mysqli $connection){
+        $sql = "SELECT * FROM Users";
+        $ret = [];
+        
+        $result = $connection->query($sql);
+        if($result == TRUE && $result->num_rows != 0){
+            foreach($result as $row){
+                $loadedUser = new User();
+                $loadedUser->id = $row['id'];
+                $loadedUser->name = $row['name'];
+                $loadedUser->hashPassword = $row['hashed_password'];
+                $loadedUser->email = $row['email'];
+                
+                $ret[] = $loadedUser;
+            }
+        }return $ret;
+    }
+    public function delete(mysqli $connection){
+        if($this->id != -1){
+            $sql = "DELETE FROM Users WHERE id=$this->id";
+            $result = $connection->query($sql);
+            if($result == TRUE){
+                $this->id = -1;
+                return TRUE;
+            }else{
+                return FALSE;
+            }
+        }
+    }
+    static public function loadUserByEmail(mysqli $connection, $email){
+        $sql = "SELECT * FROM Users WHERE email= '".$connection->real_escape_string($email)."'";
+        
+        $result = $connection->query($sql);
+        if($result == TRUE && $result->num_rows == 1){
+            $row = $result->fetch_assoc();
+            
+            $loadedUser = new User();
+            $loadedUser->id = $row['id'];
+            $loadedUser->name = $row['name'];
+            $loadedUser->hashPassword = $row['hashed_password'];
+            $loadedUser->email = $row['email'];
+            
+            return $loadedUser;
+        }
+        return NULL;
+    }
+    static public function login(mysqli $connection,$email,$password){
+        $user = self::loadUserByEmail($connection,$email);
+        if($user){
+            if(password_verify($password,$user->hashPassword)){
+                return $user;
+            }else{
+                return FALSE;
+            }
+        }else{
+            return FALSE;
+        }
+    }
+    
 }
